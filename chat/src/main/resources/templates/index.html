@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Welcome to ChatApp</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+  <header>
+    <h1>ChatApp</h1>
+  </header>
+
+  <main>
+    <p>Connect with your friends in real time.<p>
+    <div class="actions">
+      <a class="btn" th:href="@{/login}">Log In</a>
+      <a class="btn" th:href="@{/register}">Register</a>
+    </div>
+  </main>
+</body>
+</html>

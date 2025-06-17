@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Login – ChatApp</title>
+</head>
+<body>
+  <div th:replace="~{fragments :: layout('Login')}">
+    <div th:fragment="content">
+      <h2>Login</h2>
+      <form th:action="@{/login}" method="post">
+        <div>
+          <label>Username or Email</label><br/>
+          <input type="text" name="username" required/>
+        </div>
+        <div>
+          <label>Password</label><br/>
+          <input type="password" name="password" required/>
+        </div>
+        <button type="submit">Log In</button>
+      </form>
+      <p>
+        <a th:href="@{/register}">Register</a> |
+        <a th:href="@{/forgot-password}">Forgot Password?</a>
+      </p>
+      <p th:if="${param.error}" style="color:red;">
+        Invalid credentials.
+      </p>
+      <p th:if="${param.logout}" style="color:green;">
+        You’ve been logged out.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

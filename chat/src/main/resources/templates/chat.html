@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chat Room</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+
+  <!-- SockJS & STOMP for WebSocket -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  <script th:src="@{/js/chat.js}"></script>
+  
+</head>
+<body>
+  <header>
+    <nav>
+      <span>Logged in as <strong th:text="${username}"></strong></span>
+      <a th:href="@{/logout}">Logout</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    <!-- Friends List -->
+    <aside class="friends-list">
+      <h3>Friends</h3>
+      <ul>
+        <!-- Assume controller adds List<FriendDto> friends -->
+        <li th:each="f : ${friends}"
+            th:attr="data-id=${f.friendId}"
+            th:text="${f.username}"
+            onclick="selectFriend(this)">
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Chat Window -->
+    <section class="chat-window">
+      <div id="chatWindow"></div>
+      <div class="message-input">
+        <input id="msgInput" type="text" placeholder="Type your message…" />
+        <button onclick="sendMessage()">Send</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- Pass current user ID to JS -->
+  <script th:inline="javascript">
+    /*<![CDATA[*/
+    const currentUserId = /*[[${userId}]]*/ 0;
+    /*]]>*/
+  </script>
+</body>
+</html>
