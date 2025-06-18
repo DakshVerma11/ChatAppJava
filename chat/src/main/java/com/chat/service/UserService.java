@@ -57,7 +57,40 @@ public class UserService {
     public Optional<User> findByUsername(String username) {
         return userRepo.findByUsername(username);
     }
+    
+    /**
+     * Check if user exists by ID
+     * @param userId - User ID to check
+     * @return true if user exists, false otherwise
+     */
+    public boolean userExistsById(Long userId) {
+        if (userId == null) {
+            return false;
+        }
+        return userRepo.existsById(userId);
+    }
 
+    /**
+     * Find user by ID
+     */
+    public Optional<User> findById(Long userId) {
+        if (userId == null) {
+            return Optional.empty();
+        }
+        return userRepo.findById(userId);
+    }
+
+    /**
+     * Get username by user ID
+     */
+    public String getUsernameById(Long userId) {
+        return findById(userId)
+                .map(User::getUsername)
+                .orElse(null);
+    }
+
+    
+    /*
     public List<User> getFriends(Long userId) {
         List<Long> friendIds = friendRepo.findFriendIdsByUserId(userId);
         return friendIds.stream()
@@ -66,4 +99,6 @@ public class UserService {
                 .map(Optional::get)
                 .collect(Collectors.toList());
     }
+    
+    */
 }

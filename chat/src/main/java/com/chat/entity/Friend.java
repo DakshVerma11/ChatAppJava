@@ -1,3 +1,4 @@
+
 package com.chat.entity;
 
 import jakarta.persistence.*;
@@ -7,14 +8,32 @@ import java.time.LocalDateTime;
 @Table(name = "friends")
 @IdClass(FriendId.class)
 public class Friend {
-    @Id private Long userId;
-    @Id private Long friendId;
+    
+    @Id 
+    @Column(name = "user_id")
+    private Long userId;
+    
+    @Id 
+    @Column(name = "friend_id")
+    private Long friendId;
+    
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
+    
+    @Column(name = "category")
     private String category;
 
+    // Default constructor
+    public Friend() {}
 
-    
- // Getter and Setter for userId
+    // Constructor with required fields
+    public Friend(Long userId, Long friendId) {
+        this.userId = userId;
+        this.friendId = friendId;
+        this.createdAt = LocalDateTime.now();
+    }
+
+    // Getter and Setter for userId
     public Long getUserId() {
         return userId;
     }
@@ -50,4 +69,13 @@ public class Friend {
         this.category = category;
     }
 
+    @Override
+    public String toString() {
+        return "Friend{" +
+                "userId=" + userId +
+                ", friendId=" + friendId +
+                ", createdAt=" + createdAt +
+                ", category='" + category + '\'' +
+                '}';
+    }
 }

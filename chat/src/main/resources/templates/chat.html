@@ -7,9 +7,8 @@
   <link rel="stylesheet" th:href="@{/css/style.css}">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
-  <script th:src="@{/js/chat.js}"></script>
 </head>
-<body>
+<body data-user-id="[[${userId}]]">
   <header>
     <nav>
       <span>Logged in as <strong th:text="${username}"></strong></span>
@@ -42,11 +41,22 @@
       </div>
     </section>
   </div>
+  
+  <!-- ⭐ ADD THESE SCRIPT TAGS TO PASS USER ID PROPERLY ⭐ -->
   <script th:inline="javascript">
     /*<![CDATA[*/
-    const currentUserId = /*[[${userId}]]*/ 0;
+    // Set global variables from server-side data
+    window.currentUserId = /*[[${userId}]]*/ 0;
+    window.currentUsername = /*[[${username}]]*/ '';
+    
+    console.log('User ID from server:', window.currentUserId);
+    console.log('Username from server:', window.currentUsername);
     /*]]>*/
   </script>
+  
+  <!-- Load chat.js AFTER setting the global variables -->
+  <script th:src="@{/js/chat.js}"></script>
+  
   <script>
     let selectedFriendId = null;
     function selectFriend(elem) {

@@ -1,60 +1,61 @@
+
 package com.chat.controller;
 
-import com.chat.entity.Friend;
-import com.chat.entity.User;
-import com.chat.repository.FriendRepository;
-import com.chat.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.chat.service.FriendService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 public class FriendController {
 
-    @Autowired
-    private UserRepository userRepo;
-    @Autowired
-    private FriendRepository friendRepo;
+    private final FriendService friendService;
+
+    public FriendController(FriendService friendService) {
+        this.friendService = friendService;
+    }
 
     @PostMapping("/add-friend")
     public ResponseEntity<?> addFriend(
             @AuthenticationPrincipal UserDetails principal,
             @RequestParam String username
     ) {
-        Map<String, Object> resp = new HashMap<>();
+        Map<String, Object> response = new HashMap<>();
+
         if (principal == null) {
-            resp.put("success", false);
-            resp.put("message", "Not authenticated.");
-            return ResponseEntity.status(401).body(resp);
+            response.put("success", false);
+            response.put("message", "Not authenticated.");
+            return ResponseEntity.status(401).body(response);
         }
-        Optional<User> userOpt = userRepo.findByUsername(principal.getUsername());
-        Optional<User> friendOpt = userRepo.findByUsername(username);
-        if (userOpt.isEmpty()) {
-            resp.put("success", false);
-            resp.put("message", "User not found.");
-        } else if (friendOpt.isEmpty()) {
-            resp.put("success", false);
-            resp.put("message", "No such username.");
-        } else if (userOpt.get().getUsername().equals(username)) {
-            resp.put("success", false);
-            resp.put("message", "Cannot add yourself.");
-        } else if (friendRepo.findFriendIdsByUserId(userOpt.get().getUserId()).contains(friendOpt.get().getUserId())) {
-            resp.put("success", false);
-            resp.put("message", "Already friends.");
+
+        // Validation
+        if (username == null || username.trim().isEmpty()) {
+            response.put("success", false);
+            response.put("message", "Username cannot be empty.");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        if (principal.getUsername().equals(username)) {
+            response.put("success", false);
+            response.put("message", "Cannot add yourself as friend.");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        // 🔥 CALL SERVICE METHOD (WHERE INSERTION ACTUALLY HAPPENS)
+        boolean success = friendService.addFriend(principal.getUsername(), username);
+
+        if (success) {
+            response.put("success", true);
+            response.put("message", "Successfully added " + username + " as friend!");
         } else {
-            // Add to friends table
-            Friend friend = new Friend();
-            friend.setUserId(userOpt.get().getUserId());
-            friend.setFriendId(friendOpt.get().getUserId());
-            friend.setCreatedAt(LocalDateTime.now());
-            friendRepo.save(friend);
-            resp.put("success", true);
+            response.put("success", false);
+            response.put("message", "Failed to add friend. User may not exist or already friends.");
         }
-        return ResponseEntity.ok(resp);
+
+        return ResponseEntity.ok(response);
     }
 }
