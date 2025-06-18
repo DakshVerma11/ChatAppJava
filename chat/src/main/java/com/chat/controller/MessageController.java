@@ -49,7 +49,7 @@ public class MessageController {
                 return ResponseEntity.status(404).build();
             }
             
-            System.out.println("=== MESSAGE HISTORY DEBUG ===");
+            System.out.println("=== MESSAGE HISTORY REQUEST ===");
             System.out.println("Current User: " + principal.getUsername() + " (ID: " + currentUserId + ")");
             System.out.println("Friend ID: " + friendId);
             System.out.println("Timestamp: " + java.time.LocalDateTime.now());
@@ -64,6 +64,13 @@ public class MessageController {
             List<Message> messages = messageService.getConversationHistory(currentUserId, friendId);
             
             System.out.println("✅ Found " + messages.size() + " messages in conversation");
+            
+            // Debug: Print first few messages
+            for (int i = 0; i < Math.min(3, messages.size()); i++) {
+                Message msg = messages.get(i);
+                System.out.println("  Message " + (i+1) + ": " + msg.getSenderId() + " -> " + msg.getReceiverId() + ": " + msg.getContent().substring(0, Math.min(50, msg.getContent().length())));
+            }
+            
             System.out.println("==============================");
             
             return ResponseEntity.ok(messages);

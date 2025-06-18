@@ -8,7 +8,7 @@
   <div th:replace="~{fragments :: layout('Login')}">
     <div th:fragment="content">
       <h2>Login</h2>
-      <form th:action="@{/login}" method="post">
+      <form th:action="@{/login}" method="post" id="loginForm" onsubmit="return validateCaptcha('login')">
         <div>
           <label>Username or Email</label><br/>
           <input type="text" name="username" required/>
@@ -17,6 +17,16 @@
           <label>Password</label><br/>
           <input type="password" name="password" required/>
         </div>
+        
+        <!-- CAPTCHA Section -->
+        <div style="text-align: center; margin: 15px 0;">
+          <script src="https://www.google.com/recaptcha/api.js"></script>
+          <div class="g-recaptcha" data-sitekey="6LcT5l0rAAAAAMPuqI3yQuUkZYCCNh65Nucah_V1" id="loginCaptcha"></div>
+          <div id="captcha-error-login" style="color: red; font-size: 14px; margin-top: 5px; display: none;">
+            Please complete the CAPTCHA verification before submitting.
+          </div>
+        </div>
+        
         <button type="submit">Log In</button>
       </form>
       <p>
@@ -27,9 +37,46 @@
         Invalid credentials.
       </p>
       <p th:if="${param.logout}" style="color:green;">
-        You’ve been logged out.
+        You've been logged out.
+      </p>
+      <p th:if="${param.captcha}" style="color:red;">
+        Please complete the CAPTCHA verification.
       </p>
     </div>
   </div>
+
+  <script>
+    function validateCaptcha(formType) {
+      const captchaResponse = grecaptcha.getResponse();
+      const errorDiv = document.getElementById('captcha-error-' + formType);
+      
+      if (!captchaResponse || captchaResponse.length === 0) {
+        errorDiv.style.display = 'block';
+        errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return false; // Prevent form submission
+      }
+      
+      errorDiv.style.display = 'none';
+      return true; // Allow form submission
+    }
+
+    // Reset error message when user interacts with CAPTCHA
+    function captchaCallback() {
+      const errorDiv = document.getElementById('captcha-error-login');
+      if (errorDiv) {
+        errorDiv.style.display = 'none';
+      }
+    }
+
+    // Add callback to reCAPTCHA
+    window.onload = function() {
+      if (typeof grecaptcha !== 'undefined') {
+        grecaptcha.render('loginCaptcha', {
+          'sitekey': '6LcT5l0rAAAAAMPuqI3yQuUkZYCCNh65Nucah_V1',
+          'callback': captchaCallback
+        });
+      }
+    };
+  </script>
 </body>
 </html>

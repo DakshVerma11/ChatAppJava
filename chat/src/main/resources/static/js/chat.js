@@ -9,10 +9,12 @@ window.onload = function() {
     // Get current user ID from the page
     currentUserId = window.currentUserId || parseInt(document.querySelector('[data-user-id]')?.getAttribute('data-user-id'));
     
+    console.log('🚀 Initializing chat with user ID:', currentUserId);
+    
     if (currentUserId) {
         connect();
     } else {
-        console.error('Current user ID not found');
+        console.error('❌ Current user ID not found');
     }
 };
 
@@ -27,7 +29,7 @@ function connect() {
     stomp.debug = null;
     
     stomp.connect({}, function(frame) {
-        console.log('Connected: ' + frame);
+        console.log('✅ WebSocket Connected: ' + frame);
         isConnected = true;
         
         // Subscribe to messages
@@ -36,7 +38,7 @@ function connect() {
                 const message = JSON.parse(messageOutput.body);
                 handleIncomingMessage(message);
             } catch (error) {
-                console.error('Error parsing message:', error);
+                console.error('❌ Error parsing message:', error);
             }
         });
         
@@ -44,7 +46,7 @@ function connect() {
         updateConnectionStatus(true);
         
     }, function(error) {
-        console.error('WebSocket connection error:', error);
+        console.error('❌ WebSocket connection error:', error);
         isConnected = false;
         updateConnectionStatus(false);
         
@@ -62,6 +64,7 @@ function handleIncomingMessage(message) {
                              (message.senderId === currentUserId && message.receiverId === selectedFriendId);
     
     if (isRelevantMessage && selectedFriendId) {
+        console.log('📨 Incoming message:', message);
         displayMessage(message, false); // false = don't clear chat
         scrollToBottom();
     }
@@ -79,10 +82,7 @@ function sendMessage() {
         alert("Please enter a message");
         return;
     }
-	if (!currentUserId){
-		alert("wat da hell"+currentUserId+" "+selectedFriendId);
-		return;
-	}
+    
     if (!currentUserId || !selectedFriendId) {
         alert("Please select a friend to chat with");
         return;
@@ -107,27 +107,13 @@ function sendMessage() {
         // Clear input
         msgInput.value = '';
         
-		/* Duplicating lil pos
-        // Optionally display the message immediately (optimistic UI)
-        const optimisticMessage = {
-            ...messageData,
-            sentAt: new Date().toISOString()
-        };
-		
-		
-        displayMessage(optimisticMessage, false);
-		*/
+        console.log('📤 Message sent:', messageData);
         scrollToBottom();
         
-    } 
-	
-	catch (error) {
-		
-        console.error('Error sending message:', error);
+    } catch (error) {
+        console.error('❌ Error sending message:', error);
         alert("Failed to send message. Please try again.");
-		
     }
-	
 }
 
 /**
@@ -138,12 +124,14 @@ function selectFriend(elem) {
     const friendName = elem.textContent.trim();
     
     if (!friendId) {
-        console.error('Invalid friend ID');
+        console.error('❌ Invalid friend ID');
         return;
     }
     
     selectedFriendId = friendId;
     window.selectedFriendId = selectedFriendId; // For backward compatibility
+    
+    console.log('👤 Selected friend:', friendName, 'ID:', friendId);
     
     // Update UI
     highlightSelectedFriend(elem);
@@ -171,17 +159,15 @@ function highlightSelectedFriend(selectedElem) {
     selectedElem.style.background = '#d4f1f4';
 }
 
-/*
-
-Add Friend
-
-*/
-
+/**
+ * Add Friend functionality
+ */
 function addFriend(event) {
     event.preventDefault();
     const username = document.getElementById('addFriendInput').value;
     const resultSpan = document.getElementById('addFriendResult');
     resultSpan.textContent = '';
+    
     fetch('/add-friend', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -203,7 +189,6 @@ function addFriend(event) {
     return false;
 }
 
-
 /**
  * Update chat header with friend name
  */
@@ -221,62 +206,64 @@ function updateChatHeader(friendName) {
     
     chatHeader.textContent = `Chatting with ${friendName}`;
 }
+
 /**
  * Load message history for a specific friend
  */
 function loadMessageHistory(friendId) {
-    if (!friendId) return;
+    if (!friendId) {
+        console.error('❌ No friend ID provided for message history');
+        return;
+    }
+    
+    console.log('📚 Loading message history for friend ID:', friendId);
     
     // Show loading indicator
     const chatWindow = document.getElementById('chatWindow');
-    chatWindow.innerHTML = '<div style="text-align: center; color: #666;">Loading messages...</div>';
+    chatWindow.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">Loading messages...</div>';
     
-    fetch(`/api/messages/${friendId}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(messages => {
-            chatWindow.innerHTML = ''; // Clear loading message
-            
-            if (messages.length === 0) {
-                chatWindow.innerHTML = '<div style="text-align: center; color: #666;">No messages yet. Start the conversation!</div>';
-                return;
-            }
-            
-            console.log('Loaded message history:', messages);
-            
-            // Display all messages WITHOUT duplication
-            messages.forEach(message => {
-                displayMessage(message, false); // false = don't clear chat
-            });
-            
-            scrollToBottom();
-        })
-        .catch(error => {
-            console.error('Error loading message history:', error);
-            chatWindow.innerHTML = '<div style="text-align: center; color: red;">Error loading messages. Click friend again to retry.</div>';
+    fetch(`/api/messages/${friendId}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin' // Include session cookies
+    })
+    .then(response => {
+        console.log('📡 Response status:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(messages => {
+        console.log('📨 Loaded messages:', messages.length, 'messages');
+        
+        chatWindow.innerHTML = ''; // Clear loading message
+        
+        if (messages.length === 0) {
+            chatWindow.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No messages yet. Start the conversation!</div>';
+            return;
+        }
+        
+        // Display all messages
+        messages.forEach((message, index) => {
+            console.log(`📝 Displaying message ${index + 1}:`, message);
+            displayMessage(message, false); // false = don't clear chat
         });
-}
-
-/**
- * Handle incoming WebSocket messages
- */
-function handleIncomingMessage(message) {
-    // Only show messages relevant to current user and selected friend
-    const isRelevantMessage = (message.receiverId === currentUserId && message.senderId === selectedFriendId) ||
-                             (message.senderId === currentUserId && message.receiverId === selectedFriendId);
-    
-    if (isRelevantMessage && selectedFriendId) {
-        displayMessage(message, false); // false = don't clear chat
+        
         scrollToBottom();
-    }
+        console.log('✅ Message history loaded successfully');
+        
+    })
+    .catch(error => {
+        console.error('❌ Error loading message history:', error);
+        chatWindow.innerHTML = '<div style="text-align: center; color: red; padding: 20px;">Error loading messages. Please try again.</div>';
+    });
 }
 
 /**
- * Display a message in the chat window
+ * Display a message in the chat window - SINGLE DEFINITION ONLY
  */
 function displayMessage(message, clearChat = false) {
     const chatWindow = document.getElementById('chatWindow');
@@ -289,57 +276,24 @@ function displayMessage(message, clearChat = false) {
     const isCurrentUser = message.senderId === currentUserId;
     const senderName = isCurrentUser ? 'You' : 'Friend';
     
-    // Format timestamp - handle both formats
+    // Handle different timestamp formats
     let timestamp;
     if (message.sentAt) {
-        // Handle different timestamp formats
-        const date = new Date(message.sentAt);
-        timestamp = date.toLocaleTimeString();
+        try {
+            // Handle ISO string format from database
+            const date = new Date(message.sentAt);
+            if (isNaN(date.getTime())) {
+                // If invalid date, use current time
+                timestamp = new Date().toLocaleTimeString();
+            } else {
+                timestamp = date.toLocaleTimeString();
+            }
+        } catch (e) {
+            timestamp = new Date().toLocaleTimeString();
+        }
     } else {
         timestamp = new Date().toLocaleTimeString();
     }
-    
-    messageDiv.innerHTML = `
-        <div style="margin-bottom: 2px;">
-            <strong>${senderName}:</strong> ${escapeHtml(message.content)}
-        </div>
-        <small style="color: #666; font-size: 0.8em;">
-            ${timestamp}
-        </small>
-    `;
-    
-    // Style messages differently for current user vs friend
-    messageDiv.style.cssText = `
-        text-align: ${isCurrentUser ? 'right' : 'left'};
-        margin-bottom: 10px;
-        padding: 8px;
-        background-color: ${isCurrentUser ? '#e3f2fd' : '#f5f5f5'};
-        border-radius: 8px;
-        max-width: 80%;
-        margin-left: ${isCurrentUser ? 'auto' : '0'};
-        margin-right: ${isCurrentUser ? '0' : 'auto'};
-        word-wrap: break-word;
-    `;
-    
-    chatWindow.appendChild(messageDiv);
-}
-
-/**
- * Display a message in the chat window
- */
-function displayMessage(message, clearChat = false) {
-    const chatWindow = document.getElementById('chatWindow');
-    
-    if (clearChat) {
-        chatWindow.innerHTML = '';
-    }
-    
-    const messageDiv = document.createElement('div');
-    const isCurrentUser = message.senderId === currentUserId;
-    const senderName = isCurrentUser ? 'You' : 'Friend';
-    
-    // Format timestamp
-    const timestamp = message.sentAt ? new Date(message.sentAt).toLocaleTimeString() : new Date().toLocaleTimeString();
     
     messageDiv.innerHTML = `
         <div style="margin-bottom: 2px;">
@@ -371,7 +325,9 @@ function displayMessage(message, clearChat = false) {
  */
 function scrollToBottom() {
     const chatWindow = document.getElementById('chatWindow');
-    chatWindow.scrollTop = chatWindow.scrollHeight;
+    if (chatWindow) {
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
 }
 
 /**
@@ -431,11 +387,9 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 document.addEventListener('visibilitychange', function() {
     if (document.hidden) {
-        // Page is hidden, could pause some activities
-        console.log('Page hidden');
+        console.log('📱 Page hidden');
     } else {
-        // Page is visible, ensure connection is active
-        console.log('Page visible');
+        console.log('📱 Page visible');
         if (!isConnected) {
             connect();
         }
