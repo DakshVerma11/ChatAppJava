@@ -3,35 +3,41 @@ package com.chat.service;
 import com.chat.entity.User;
 import com.chat.repository.UserRepository;
 import com.chat.repository.FriendRepository;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-
 @Service
 public class UserService {
     private final UserRepository userRepo;
     private final FriendRepository friendRepo;
-    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+    //private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepo, FriendRepository friendRepo) {
+
+    public UserService(UserRepository userRepo, FriendRepository friendRepo, PasswordEncoder passwordEncoder) {
         this.userRepo = userRepo;
         this.friendRepo = friendRepo;
+        this.passwordEncoder = passwordEncoder;
     }
 
+
     public User register(User u) {
-        u.setPasswordHash(encoder.encode(u.getPasswordHash()));
+    	u.setPasswordHash(passwordEncoder.encode(u.getPasswordHash()));
         u.setLastSeen(LocalDateTime.now());
         return userRepo.save(u);
     }
+
+ // Compare raw password at login
     public Optional<User> authenticate(String usernameOrEmail, String rawPw) {
         Optional<User> u = userRepo.findByUsername(usernameOrEmail)
             .or(() -> userRepo.findByEmail(usernameOrEmail));
-        return u.filter(user -> encoder.matches(rawPw, user.getPasswordHash()));
+        return u.filter(user -> passwordEncoder.matches(rawPw, user.getPasswordHash()));
     }
+
     public void updateStatus(Long id, boolean online) {
         userRepo.findById(id).ifPresent(u -> {
             u.setOnline(online);
@@ -53,16 +59,11 @@ public class UserService {
     }
 
     public List<User> getFriends(Long userId) {
-        // 1. Get friend IDs from friends table where userId = given userId
         List<Long> friendIds = friendRepo.findFriendIdsByUserId(userId);
-
-        // 2. Fetch User entities for each friendId and collect to List<User>
         return friendIds.stream()
                 .map(friendId -> userRepo.findById(friendId))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toList());
     }
-
-	
 }

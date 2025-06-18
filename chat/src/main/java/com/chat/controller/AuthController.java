@@ -47,7 +47,7 @@ public class AuthController {
     }
     
     
-    
+    /*
     @PostMapping("/login")
     public String loginUser(
             @RequestParam("username") String usernameOrEmail,
@@ -59,7 +59,6 @@ public class AuthController {
     	
     	System.out.println(usernameOrEmail+"  "+password);
     	
-    	model.addAttribute("msg", "MEOWWWWWWWWWWWWWWWWWWWWWWWWWWW.");
     	//
         Optional<User> userOpt = userService.authenticate(usernameOrEmail, password);
 
@@ -73,7 +72,7 @@ public class AuthController {
             return "login";
         }
     }
-    
+    */
     
     /**
      * 
