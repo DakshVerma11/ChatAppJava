@@ -62,6 +62,7 @@
        * Process the registration submission.
        * Performs basic validation and checks for duplicate usernames/emails.
        */
+      /*
       @PostMapping("/register")
       public String registerUser(
               @Valid @ModelAttribute("user") User user,
@@ -70,7 +71,10 @@
               RedirectAttributes redirectAttrs,
               Model model
       ) {
-          // 1) CAPTCHA verification
+          
+           
+           // 1) CAPTCHA verification
+           
           if (!captchaService.verifyCaptcha(captchaResponse)) {
               model.addAttribute("captchaError", "Please complete the CAPTCHA verification.");
               return "register";
@@ -98,7 +102,43 @@
           redirectAttrs.addAttribute("registered", true);
           return "redirect:/login";
       }
+		
+		*/
+      
+      /**
+       * Process the registration submission.
+       * Performs basic validation and checks for duplicate usernames/emails.
+       * CAPTCHA verification removed from registration.
+       */
+      @PostMapping("/register")
+      public String registerUser(
+              @Valid @ModelAttribute("user") User user,
+              BindingResult bindingResult,
+              RedirectAttributes redirectAttrs,
+              Model model
+      ) {
+          // 1) Bean-level validation errors?
+          if (bindingResult.hasErrors()) {
+              return "register";
+          }
 
+          // 2) Duplicate username/email?
+          if (userService.existsByUsername(user.getUsername())) {
+              model.addAttribute("usernameError", "Username already taken");
+              return "register";
+          }
+          if (userService.existsByEmail(user.getEmail())) {
+              model.addAttribute("emailError", "Email already registered");
+              return "register";
+          }
+
+          // 3) All good → save user
+          userService.register(user);
+
+          // 4) Redirect to login with a flag so we can show a success msg
+          redirectAttrs.addAttribute("registered", true);
+          return "redirect:/login";
+      }
       /**
        * Show forgot‐password form.
        */
